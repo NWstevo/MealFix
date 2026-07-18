@@ -1,108 +1,88 @@
 package com.example.mealfix.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.mealfix.data.Day
-import com.example.mealfix.data.LogEntry
-import com.example.mealfix.data.Meal
-import com.example.mealfix.data.PlannedMeal
-import com.example.mealfix.data.WeeklyTarget
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.mealfix.data.DraftIngredient
+import com.example.mealfix.data.MealPlannerRepository
+import com.example.mealfix.data.MealPlannerUiState
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
- * Everything the UI needs to render, bundled into one immutable snapshot.
- * Compose screens observe this via collectAsState() and recompose whenever it changes.
+ * A thin layer between the UI and the repository: it exposes the repository's reactive
+ * uiState as something Compose can collect, and turns each user action into a coroutine
+ * that calls the matching suspend function on the repository. No data lives in this class
+ * anymore — Room (via the repository) is the single source of truth now.
  */
-data class MealPlannerUiState(
-    val meals: List<Meal> = emptyList(),
-    val weeklyTarget: WeeklyTarget = WeeklyTarget(kcalPerWeek = 14000.0), // ~2000 kcal/day default
-    val plannedMeals: List<PlannedMeal> = emptyList(),
-    val logEntries: List<LogEntry> = emptyList(),
-) {
-    fun mealById(id: String): Meal? = meals.find { it.id == id }
+class MealPlannerViewModel(private val repository: MealPlannerRepository) : ViewModel() {
 
-    val totalKcalConsumed: Double
-        get() = logEntries.sumOf { entry -> mealById(entry.mealId)?.let { entry.kcalConsumed(it) } ?: 0.0 }
+    val uiState: StateFlow<MealPlannerUiState> = repository.uiState.stateIn(
+        scope = viewModelScope,
+        // Keeps the underlying Flow alive for 5s after the last observer disappears,
+        // so quick screen rotations/navigation don't restart the whole query needlessly.
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = MealPlannerUiState(),
+    )
 
-    /** Fraction of the weekly target eaten so far, clamped to [0, 1] for progress bars. */
-    val progressFraction: Float
-        get() = if (weeklyTarget.kcalPerWeek <= 0.0) 0f
-        else (totalKcalConsumed / weeklyTarget.kcalPerWeek).toFloat().coerceIn(0f, 1f)
-}
+    // ---------- Food shelf ----------
 
-/**
- * Holds the app's state in memory (nothing is saved to disk yet — that's the next phase,
- * once this version is confirmed running). All state changes go through this class so
- * every screen sees the same, consistent data.
- */
-class MealPlannerViewModel : ViewModel() {
+    fun addFoodItem(name: String, referenceKcal: Double, referenceGrams: Double) {
+        viewModelScope.launch { repository.addFoodItem(name, referenceKcal, referenceGrams) }
+    }
 
-    private val _uiState = MutableStateFlow(MealPlannerUiState())
-    val uiState: StateFlow<MealPlannerUiState> = _uiState.asStateFlow()
+    fun deleteFoodItem(foodItemId: String) {
+        viewModelScope.launch { repository.deleteFoodItem(foodItemId) }
+    }
 
-    // ---------- Meal library ----------
+    // ---------- Meal builder ----------
 
-    fun addMeal(name: String, kcalPerKg: Double) {
-        if (name.isBlank() || kcalPerKg <= 0.0) return
-        _uiState.update { it.copy(meals = it.meals + Meal(name = name.trim(), kcalPerKg = kcalPerKg)) }
+    fun confirmMeal(name: String, ingredients: List<DraftIngredient>) {
+        viewModelScope.launch { repository.confirmMeal(name, ingredients) }
     }
 
     fun deleteMeal(mealId: String) {
-        _uiState.update {
-            it.copy(
-                meals = it.meals.filterNot { m -> m.id == mealId },
-                // also drop anything that referenced this meal so we don't leave orphaned entries
-                plannedMeals = it.plannedMeals.filterNot { p -> p.mealId == mealId },
-                logEntries = it.logEntries.filterNot { l -> l.mealId == mealId },
-            )
-        }
+        viewModelScope.launch { repository.deleteMeal(mealId) }
     }
 
-    // ---------- Weekly plan ----------
+    // ---------- Target (weekly schedule) ----------
 
     fun setWeeklyTarget(kcal: Double) {
-        if (kcal <= 0.0) return
-        _uiState.update { current ->
-            val perMeal = if (current.plannedMeals.isEmpty()) 0.0 else kcal / current.plannedMeals.size
-            current.copy(
-                weeklyTarget = WeeklyTarget(kcalPerWeek = kcal),
-                plannedMeals = current.plannedMeals.map { it.copy(targetKcal = perMeal) },
-            )
-        }
+        viewModelScope.launch { repository.setWeeklyTarget(kcal) }
     }
 
-    /** Adds a meal to the weekly plan and re-splits the weekly target evenly across all planned meals. */
-    fun addPlannedMeal(mealId: String, day: Day) {
-        _uiState.update { current ->
-            val newCount = current.plannedMeals.size + 1
-            val perMeal = current.weeklyTarget.kcalPerWeek / newCount
-            val rebalanced = current.plannedMeals.map { it.copy(targetKcal = perMeal) }
-            current.copy(
-                plannedMeals = rebalanced + PlannedMeal(mealId = mealId, day = day, targetKcal = perMeal),
-            )
-        }
+    fun scheduleMeal(day: Day, mealId: String) {
+        viewModelScope.launch { repository.scheduleMeal(day, mealId) }
     }
 
-    fun removePlannedMeal(plannedMealId: String) {
-        _uiState.update { current ->
-            val remaining = current.plannedMeals.filterNot { it.id == plannedMealId }
-            val perMeal = if (remaining.isEmpty()) 0.0 else current.weeklyTarget.kcalPerWeek / remaining.size
-            current.copy(plannedMeals = remaining.map { it.copy(targetKcal = perMeal) })
-        }
+    fun unscheduleDay(day: Day) {
+        viewModelScope.launch { repository.unscheduleDay(day) }
     }
 
     // ---------- Tracker ----------
 
-    fun logMeal(mealId: String, day: Day, quantityKg: Double) {
-        if (quantityKg <= 0.0) return
-        _uiState.update {
-            it.copy(logEntries = it.logEntries + LogEntry(mealId = mealId, day = day, quantityKg = quantityKg))
-        }
+    fun logMeal(mealId: String, day: Day) {
+        viewModelScope.launch { repository.logMeal(mealId, day) }
     }
 
     fun deleteLogEntry(logEntryId: String) {
-        _uiState.update { it.copy(logEntries = it.logEntries.filterNot { l -> l.id == logEntryId }) }
+        viewModelScope.launch { repository.deleteLogEntry(logEntryId) }
+    }
+}
+
+/**
+ * Compose's viewModel() function needs to know how to construct a MealPlannerViewModel,
+ * but it only knows how to build no-argument ViewModels by default. This factory tells it
+ * how, by supplying the repository ourselves (see MealFixApplication and MainActivity).
+ */
+class MealPlannerViewModelFactory(
+    private val repository: MealPlannerRepository,
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return MealPlannerViewModel(repository) as T
     }
 }

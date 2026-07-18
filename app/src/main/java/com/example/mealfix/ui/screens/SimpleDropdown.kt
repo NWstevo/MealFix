@@ -17,7 +17,9 @@ import androidx.compose.ui.Modifier
  * A simple "pick one of these options" dropdown, built from a Button + DropdownMenu
  * rather than Material3's ExposedDropdownMenuBox — that API has shifted signature
  * across recent Material3 versions, so this plainer version is safer for a first build.
- * Shared by the Weekly Plan and Tracker screens.
+ * Shared by the Meal builder, Target, and Tracker screens. Works fine with a nullable T too
+ * (e.g. List<MealWithIngredients?>), which the Target screen uses for its "no meal assigned
+ * to this day yet" option.
  */
 @Composable
 fun <T> SimpleDropdown(
