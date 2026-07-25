@@ -50,8 +50,8 @@ class MealPlannerViewModel(private val repository: MealPlannerRepository) : View
 
     // ---------- Target (weekly schedule) ----------
 
-    fun setWeeklyTarget(kcal: Double) {
-        viewModelScope.launch { repository.setWeeklyTarget(kcal) }
+    fun setDailyTarget(dailyKcal: Double) {
+        viewModelScope.launch { repository.setDailyTarget(dailyKcal) }
     }
 
     fun scheduleMeal(day: Day, mealId: String) {
@@ -64,12 +64,12 @@ class MealPlannerViewModel(private val repository: MealPlannerRepository) : View
 
     // ---------- Tracker ----------
 
-    fun logMeal(mealId: String, day: Day) {
-        viewModelScope.launch { repository.logMeal(mealId, day) }
+    fun logMeal(day: Day, mealId: String) {
+        viewModelScope.launch { repository.logMeal(day, mealId) }
     }
 
-    fun deleteLogEntry(logEntryId: String) {
-        viewModelScope.launch { repository.deleteLogEntry(logEntryId) }
+    fun unlogDay(day: Day) {
+        viewModelScope.launch { repository.unlogDay(day) }
     }
 }
 

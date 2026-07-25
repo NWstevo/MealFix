@@ -145,9 +145,17 @@ fun MealBuilderScreen(
                     mealName = ""
                     draftIngredients.clear()
                 },
+                enabled = mealName.isNotBlank(),
                 modifier = Modifier.padding(top = 16.dp),
             ) {
                 Text("Confirm meal")
+            }
+            if (mealName.isBlank()) {
+                Text(
+                    "Give the meal a name before confirming.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }

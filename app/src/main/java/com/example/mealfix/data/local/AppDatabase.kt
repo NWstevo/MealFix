@@ -30,7 +30,7 @@ import com.example.mealfix.data.WeeklyTarget
         LogEntry::class,
         WeeklyTarget::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)

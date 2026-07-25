@@ -68,7 +68,7 @@ fun FoodShelfScreen(
             OutlinedTextField(
                 value = gramsInput,
                 onValueChange = { gramsInput = it },
-                label = { Text("For how many grams") },
+                label = { Text("Grams") },
                 placeholder = { Text("e.g. 500") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.weight(1f).padding(start = 8.dp),

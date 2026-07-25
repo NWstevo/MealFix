@@ -36,37 +36,43 @@ import kotlin.math.roundToInt
 fun TargetScreen(
     meals: List<MealWithIngredients>,
     scheduledMeals: List<ScheduledMeal>,
+    dailyTargetKcal: Double,
     weeklyTargetKcal: Double,
     totalScheduledKcal: Double,
     scheduledProgressFraction: Float,
-    onSetWeeklyTarget: (Double) -> Unit,
+    onSetDailyTarget: (Double) -> Unit,
     onScheduleMeal: (day: Day, mealId: String) -> Unit,
     onUnscheduleDay: (day: Day) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var targetInput by remember(weeklyTargetKcal) { mutableStateOf(weeklyTargetKcal.roundToInt().toString()) }
+    var targetInput by remember(dailyTargetKcal) { mutableStateOf(dailyTargetKcal.roundToInt().toString()) }
 
     Column(
         modifier = modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
     ) {
-        Text("Weekly calorie target", style = MaterialTheme.typography.titleMedium)
+        Text("Daily calorie target", style = MaterialTheme.typography.titleMedium)
         Row(verticalAlignment = Alignment.CenterVertically) {
             OutlinedTextField(
                 value = targetInput,
                 onValueChange = { targetInput = it },
-                label = { Text("kcal for the week") },
+                label = { Text("kcal per day") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f).padding(top = 8.dp),
             )
             Button(
-                onClick = { targetInput.toDoubleOrNull()?.let(onSetWeeklyTarget) },
+                onClick = { targetInput.toDoubleOrNull()?.let(onSetDailyTarget) },
                 modifier = Modifier.padding(start = 8.dp, top = 8.dp),
             ) {
                 Text("Set")
             }
         }
+        Text(
+            "= ${weeklyTargetKcal.roundToInt()} kcal per week",
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 4.dp),
+        )
 
         LinearProgressIndicator(
             progress = { scheduledProgressFraction },

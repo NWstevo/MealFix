@@ -77,11 +77,12 @@ interface LogEntryDao {
     @Query("SELECT * FROM log_entries")
     fun getAll(): Flow<List<LogEntry>>
 
-    @Insert
-    suspend fun insert(logEntry: LogEntry)
+    /** Upsert keyed on `day` — logging a different meal for a day that already has one replaces it. */
+    @Upsert
+    suspend fun upsert(logEntry: LogEntry)
 
-    @Query("DELETE FROM log_entries WHERE id = :id")
-    suspend fun deleteById(id: String)
+    @Query("DELETE FROM log_entries WHERE day = :day")
+    suspend fun deleteByDay(day: Day)
 
     @Query("DELETE FROM log_entries WHERE mealId = :mealId")
     suspend fun deleteByMealId(mealId: String)

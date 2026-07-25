@@ -78,23 +78,27 @@ data class ScheduledMeal(
 )
 
 /**
- * The overall calorie goal for the week. There's only ever one row here (id is always 0) —
- * it's a single-row "settings" table.
+ * The overall calorie goal, set as a daily figure (id is always 0 — a single-row "settings"
+ * table). The weekly figure used everywhere else in the app is derived from this, not stored
+ * separately, so the two can never drift out of sync.
  */
 @Entity(tableName = "weekly_target")
 data class WeeklyTarget(
     @PrimaryKey val id: Int = 0,
-    val kcalPerWeek: Double,
-)
+    val dailyTargetKcal: Double,
+) {
+    val kcalPerWeek: Double
+        get() = dailyTargetKcal * 7
+}
 
 /**
- * An actual, logged instance of eating a confirmed meal — the "tracker" half of the app.
- * Since a meal's kcal is fixed once confirmed, logging it just records that it was eaten
- * on a given day; no separate quantity is needed.
+ * Which confirmed meal was actually eaten on which day of the week — the "tracker" half of
+ * the app. Only one logged meal per day, mirroring ScheduledMeal: picking a different meal
+ * for a day that's already logged replaces it (see LogEntryDao's use of @Upsert with `day`
+ * as the primary key).
  */
 @Entity(tableName = "log_entries")
 data class LogEntry(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey val day: Day,
     val mealId: String,
-    val day: Day,
 )

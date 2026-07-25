@@ -5,7 +5,7 @@ import com.example.mealfix.data.local.AppDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-private const val DEFAULT_WEEKLY_KCAL = 14000.0 // ~2000 kcal/day, used until the user sets their own
+private const val DEFAULT_DAILY_KCAL = 2000.0 // used until the user sets their own
 
 /** A confirmed meal bundled with the ingredient lines that make it up. */
 data class MealWithIngredients(
@@ -32,7 +32,7 @@ data class DraftIngredient(
 data class MealPlannerUiState(
     val foodItems: List<FoodItem> = emptyList(),
     val meals: List<MealWithIngredients> = emptyList(),
-    val weeklyTarget: WeeklyTarget = WeeklyTarget(kcalPerWeek = DEFAULT_WEEKLY_KCAL),
+    val weeklyTarget: WeeklyTarget = WeeklyTarget(dailyTargetKcal = DEFAULT_DAILY_KCAL),
     val scheduledMeals: List<ScheduledMeal> = emptyList(),
     val logEntries: List<LogEntry> = emptyList(),
 ) {
@@ -53,6 +53,10 @@ data class MealPlannerUiState(
     val progressFraction: Float
         get() = if (weeklyTarget.kcalPerWeek <= 0.0) 0f
         else (totalKcalConsumed / weeklyTarget.kcalPerWeek).toFloat().coerceIn(0f, 1f)
+
+    /** What's left of the weekly target after everything logged so far — can go negative if over budget. */
+    val remainingKcal: Double
+        get() = weeklyTarget.kcalPerWeek - totalKcalConsumed
 }
 
 /**
@@ -92,7 +96,7 @@ class MealPlannerRepository(private val db: AppDatabase) {
         MealPlannerUiState(
             foodItems = foodItems,
             meals = meals,
-            weeklyTarget = target ?: WeeklyTarget(kcalPerWeek = DEFAULT_WEEKLY_KCAL),
+            weeklyTarget = target ?: WeeklyTarget(dailyTargetKcal = DEFAULT_DAILY_KCAL),
             scheduledMeals = scheduled,
             logEntries = logs,
         )
@@ -149,9 +153,9 @@ class MealPlannerRepository(private val db: AppDatabase) {
 
     // ---------- Target (weekly schedule) ----------
 
-    suspend fun setWeeklyTarget(kcal: Double) {
-        if (kcal <= 0.0) return
-        weeklyTargetDao.upsert(WeeklyTarget(kcalPerWeek = kcal))
+    suspend fun setDailyTarget(dailyKcal: Double) {
+        if (dailyKcal <= 0.0) return
+        weeklyTargetDao.upsert(WeeklyTarget(dailyTargetKcal = dailyKcal))
     }
 
     /** Assigns a confirmed meal to a day — replaces whatever was previously scheduled for that day. */
@@ -165,11 +169,12 @@ class MealPlannerRepository(private val db: AppDatabase) {
 
     // ---------- Tracker ----------
 
-    suspend fun logMeal(mealId: String, day: Day) {
-        logEntryDao.insert(LogEntry(mealId = mealId, day = day))
+    /** Logs a confirmed meal as eaten on a day — replaces whatever was previously logged for that day. */
+    suspend fun logMeal(day: Day, mealId: String) {
+        logEntryDao.upsert(LogEntry(day = day, mealId = mealId))
     }
 
-    suspend fun deleteLogEntry(logEntryId: String) {
-        logEntryDao.deleteById(logEntryId)
+    suspend fun unlogDay(day: Day) {
+        logEntryDao.deleteByDay(day)
     }
 }

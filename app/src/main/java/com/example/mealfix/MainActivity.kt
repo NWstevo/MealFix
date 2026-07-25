@@ -93,10 +93,11 @@ private fun MealFixApp() {
             AppScreen.TARGET -> TargetScreen(
                 meals = uiState.meals,
                 scheduledMeals = uiState.scheduledMeals,
+                dailyTargetKcal = uiState.weeklyTarget.dailyTargetKcal,
                 weeklyTargetKcal = uiState.weeklyTarget.kcalPerWeek,
                 totalScheduledKcal = uiState.totalScheduledKcal,
                 scheduledProgressFraction = uiState.scheduledProgressFraction,
-                onSetWeeklyTarget = viewModel::setWeeklyTarget,
+                onSetDailyTarget = viewModel::setDailyTarget,
                 onScheduleMeal = viewModel::scheduleMeal,
                 onUnscheduleDay = viewModel::unscheduleDay,
                 modifier = contentModifier,
@@ -107,8 +108,9 @@ private fun MealFixApp() {
                 weeklyTargetKcal = uiState.weeklyTarget.kcalPerWeek,
                 totalKcalConsumed = uiState.totalKcalConsumed,
                 progressFraction = uiState.progressFraction,
+                remainingKcal = uiState.remainingKcal,
                 onLogMeal = viewModel::logMeal,
-                onDeleteLogEntry = viewModel::deleteLogEntry,
+                onUnlogDay = viewModel::unlogDay,
                 modifier = contentModifier,
             )
         }
