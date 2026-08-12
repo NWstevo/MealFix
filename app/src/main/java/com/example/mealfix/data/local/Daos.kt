@@ -70,6 +70,10 @@ interface ScheduledMealDao {
 
     @Query("DELETE FROM scheduled_meals WHERE mealId = :mealId")
     suspend fun deleteByMealId(mealId: String)
+
+    /** Used to clean up any "followed" ticks on days whose scheduled meal is about to be deleted. */
+    @Query("SELECT day FROM scheduled_meals WHERE mealId = :mealId")
+    suspend fun getDaysByMealId(mealId: String): List<Day>
 }
 
 @Dao
@@ -77,15 +81,12 @@ interface LogEntryDao {
     @Query("SELECT * FROM log_entries")
     fun getAll(): Flow<List<LogEntry>>
 
-    /** Upsert keyed on `day` — logging a different meal for a day that already has one replaces it. */
+    /** Marks a day's scheduled meal as followed. */
     @Upsert
-    suspend fun upsert(logEntry: LogEntry)
+    suspend fun markFollowed(logEntry: LogEntry)
 
     @Query("DELETE FROM log_entries WHERE day = :day")
     suspend fun deleteByDay(day: Day)
-
-    @Query("DELETE FROM log_entries WHERE mealId = :mealId")
-    suspend fun deleteByMealId(mealId: String)
 }
 
 @Dao

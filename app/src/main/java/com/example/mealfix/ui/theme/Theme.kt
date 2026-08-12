@@ -1,6 +1,5 @@
 package com.example.mealfix.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -13,60 +12,65 @@ import androidx.compose.ui.graphics.Color
 // base colors themselves.
 
 private val LightColors = lightColorScheme(
-    primary = Green500,
+    primary = Teal600,
     onPrimary = Color.White,
-    primaryContainer = Green100,
-    onPrimaryContainer = Green900,
+    primaryContainer = Teal100,
+    onPrimaryContainer = Teal700,
 
-    secondary = Lime400,
-    onSecondary = Green900,
-    secondaryContainer = Lime100,
-    onSecondaryContainer = Green900,
+    secondary = Amber600,
+    onSecondary = Color.White,
+    secondaryContainer = Amber100,
+    onSecondaryContainer = Color(0xFF7C4A03),
 
-    tertiary = Green200,
-    onTertiary = Green900,
-    tertiaryContainer = Green50,
-    onTertiaryContainer = Green800,
+    tertiary = Teal500,
+    onTertiary = Color.White,
+    tertiaryContainer = Teal100,
+    onTertiaryContainer = Teal700,
 
-    background = Green50,
-    onBackground = Green900,
-    surface = Green50,
-    onSurface = Green900,
-    surfaceVariant = Green100,
-    onSurfaceVariant = Green800,
+    background = Slate50,
+    onBackground = Slate900,
+    surface = Color.White,
+    onSurface = Slate900,
+    surfaceVariant = Slate100,
+    onSurfaceVariant = Slate600,
 
-    outline = Green600,
+    outline = Slate400,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Green300,
-    onPrimary = Green900,
-    primaryContainer = DarkGreenContainer,
-    onPrimaryContainer = Green100,
+    primary = Teal300,
+    onPrimary = Color(0xFF00201C),
+    primaryContainer = TealContainerDark,
+    onPrimaryContainer = Teal100,
 
-    secondary = Lime400,
-    onSecondary = Green900,
-    secondaryContainer = Green700,
-    onSecondaryContainer = Green50,
+    secondary = Amber400,
+    onSecondary = Color(0xFF2A1800),
+    secondaryContainer = AmberContainerDark,
+    onSecondaryContainer = Amber100,
 
-    tertiary = Green200,
-    onTertiary = Green900,
-    tertiaryContainer = DarkGreenContainer,
-    onTertiaryContainer = Green100,
+    tertiary = Teal300,
+    onTertiary = Color(0xFF00201C),
+    tertiaryContainer = TealContainerDark,
+    onTertiaryContainer = Teal100,
 
-    background = DarkGreenBackground,
-    onBackground = Green50,
-    surface = DarkGreenSurface,
-    onSurface = Green50,
-    surfaceVariant = DarkGreenContainer,
-    onSurfaceVariant = Green100,
+    background = Slate900,
+    onBackground = Slate100,
+    surface = SlateSurfaceDark,
+    onSurface = Slate100,
+    surfaceVariant = Slate800,
+    onSurfaceVariant = Slate200,
 
-    outline = Green400,
+    outline = Slate600,
 )
 
+/**
+ * MealFix's Material3 theme, in exactly two modes — light and dark — selected explicitly by
+ * [darkTheme] rather than inferred, so the in-app theme switch (see ThemePreferences /
+ * MainActivity) always wins over the system setting once the user has picked one.
+ */
 @Composable
 fun MealFixTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColors else LightColors

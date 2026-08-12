@@ -38,6 +38,9 @@ data class MealPlannerUiState(
 ) {
     fun mealById(id: String): Meal? = meals.find { it.meal.id == id }?.meal
 
+    /** The meal Target has scheduled for a day, if any. */
+    fun scheduledMealFor(day: Day): Meal? = scheduledMeals.find { it.day == day }?.mealId?.let(::mealById)
+
     /** Total kcal across everything currently scheduled for the week (the Target tab's tally). */
     val totalScheduledKcal: Double
         get() = scheduledMeals.sumOf { scheduled -> mealById(scheduled.mealId)?.totalKcal ?: 0.0 }
@@ -46,9 +49,13 @@ data class MealPlannerUiState(
         get() = if (weeklyTarget.kcalPerWeek <= 0.0) 0f
         else (totalScheduledKcal / weeklyTarget.kcalPerWeek).toFloat().coerceIn(0f, 1f)
 
-    /** Total kcal actually logged as eaten so far this week (the Tracker tab's tally). */
+    /**
+     * Total kcal for days whose scheduled meal has been ticked as "followed" (the Tracker
+     * tab's tally) — always the *currently* scheduled meal for that day, never a stale
+     * snapshot, since LogEntry itself carries no meal reference.
+     */
     val totalKcalConsumed: Double
-        get() = logEntries.sumOf { entry -> mealById(entry.mealId)?.totalKcal ?: 0.0 }
+        get() = logEntries.sumOf { entry -> scheduledMealFor(entry.day)?.totalKcal ?: 0.0 }
 
     val progressFraction: Float
         get() = if (weeklyTarget.kcalPerWeek <= 0.0) 0f
@@ -144,11 +151,13 @@ class MealPlannerRepository(private val db: AppDatabase) {
     }
 
     suspend fun deleteMeal(mealId: String) {
+        // The days this meal was scheduled for are about to lose that schedule, so any
+        // "followed" tick on them stops meaning anything — clear those before unscheduling.
+        val affectedDays = scheduledMealDao.getDaysByMealId(mealId)
         mealDao.deleteById(mealId)
-        // Drop anything that referenced this meal so we don't leave orphaned entries.
         mealIngredientDao.deleteByMealId(mealId)
         scheduledMealDao.deleteByMealId(mealId)
-        logEntryDao.deleteByMealId(mealId)
+        affectedDays.forEach { logEntryDao.deleteByDay(it) }
     }
 
     // ---------- Target (weekly schedule) ----------
@@ -158,23 +167,23 @@ class MealPlannerRepository(private val db: AppDatabase) {
         weeklyTargetDao.upsert(WeeklyTarget(dailyTargetKcal = dailyKcal))
     }
 
-    /** Assigns a confirmed meal to a day — replaces whatever was previously scheduled for that day. */
+    /**
+     * Assigns a confirmed meal to a day — replaces whatever was previously scheduled for that
+     * day. Also clears any "followed" tick on that day, since it referred to the old plan.
+     */
     suspend fun scheduleMeal(day: Day, mealId: String) {
         scheduledMealDao.upsert(ScheduledMeal(day = day, mealId = mealId))
+        logEntryDao.deleteByDay(day)
     }
 
     suspend fun unscheduleDay(day: Day) {
         scheduledMealDao.deleteByDay(day)
+        logEntryDao.deleteByDay(day)
     }
 
     // ---------- Tracker ----------
 
-    /** Logs a confirmed meal as eaten on a day — replaces whatever was previously logged for that day. */
-    suspend fun logMeal(day: Day, mealId: String) {
-        logEntryDao.upsert(LogEntry(day = day, mealId = mealId))
-    }
-
-    suspend fun unlogDay(day: Day) {
-        logEntryDao.deleteByDay(day)
+    suspend fun setDayFollowed(day: Day, followed: Boolean) {
+        if (followed) logEntryDao.markFollowed(LogEntry(day = day)) else logEntryDao.deleteByDay(day)
     }
 }

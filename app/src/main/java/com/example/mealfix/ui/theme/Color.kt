@@ -2,28 +2,29 @@ package com.example.mealfix.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// "Green life" palette — a ladder of green intensities from deep forest down to
-// pale mint, plus a fresher lime-green for accents. Named by intensity (900 = darkest,
-// 50 = lightest) so it's easy to tell at a glance how strong a shade is.
+// "Modern professional" palette — a deep teal as the primary brand color (calm,
+// health-adjacent without being literal "grocery green"), a warm amber as a small
+// energetic accent (fits a calorie/energy theme), and true neutral slates for
+// surfaces so the UI reads as a clean, modern app rather than a themed one.
 
-val Green900 = Color(0xFF0F3D12) // deep forest — dark-mode background / high-contrast text
-val Green800 = Color(0xFF1B5E20) // dark green — text on light containers
-val Green700 = Color(0xFF2E7D32) // rich green
-val Green600 = Color(0xFF388E3C)
-val Green500 = Color(0xFF4CAF50) // main "life" green — primary in light mode
-val Green400 = Color(0xFF66BB6A)
-val Green300 = Color(0xFF81C784) // light green — primary in dark mode, pops on dark bg
-val Green200 = Color(0xFFA5D6A7)
-val Green100 = Color(0xFFC8E6C9) // pale green — containers
-val Green50 = Color(0xFFE8F5E9)  // near-white green — light background tint
+val Teal700 = Color(0xFF0F766E)
+val Teal600 = Color(0xFF0D9488) // primary — light mode
+val Teal500 = Color(0xFF14B8A6)
+val Teal300 = Color(0xFF5EEAD4) // primary — dark mode, pops on dark bg
+val Teal100 = Color(0xFFCCFBF1) // pale teal — containers, light mode
+val TealContainerDark = Color(0xFF134E4A) // containers, dark mode
 
-// A slightly yellow-leaning green (lime) for a second, fresher intensity —
-// keeps things in the same green family while adding a bit of energy/variety.
-val Lime400 = Color(0xFF9CCC65)
-val Lime100 = Color(0xFFDCEDC8)
+val Amber600 = Color(0xFFD97706) // secondary accent — light mode
+val Amber400 = Color(0xFFFBBF24) // secondary accent — dark mode
+val Amber100 = Color(0xFFFEF3C7)
+val AmberContainerDark = Color(0xFF78350F)
 
-// Dark-mode surfaces: a dark, slightly green-tinted near-black rather than pure
-// black/grey, so the "life" feeling carries into dark mode too.
-val DarkGreenBackground = Color(0xFF0D1F0F)
-val DarkGreenSurface = Color(0xFF132514)
-val DarkGreenContainer = Color(0xFF1E4620)
+// True neutrals (no green/blue tint) so surfaces feel clean rather than colored.
+val Slate50 = Color(0xFFF8FAFC)
+val Slate100 = Color(0xFFF1F5F9)
+val Slate200 = Color(0xFFE2E8F0)
+val Slate400 = Color(0xFF94A3B8)
+val Slate600 = Color(0xFF475569)
+val Slate800 = Color(0xFF1E293B)
+val Slate900 = Color(0xFF0F172A) // dark-mode background
+val SlateSurfaceDark = Color(0xFF162032) // dark-mode surface, one step up from background

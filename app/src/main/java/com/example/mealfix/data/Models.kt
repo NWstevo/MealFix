@@ -92,13 +92,12 @@ data class WeeklyTarget(
 }
 
 /**
- * Which confirmed meal was actually eaten on which day of the week — the "tracker" half of
- * the app. Only one logged meal per day, mirroring ScheduledMeal: picking a different meal
- * for a day that's already logged replaces it (see LogEntryDao's use of @Upsert with `day`
- * as the primary key).
+ * A confirmation that the meal scheduled for a day (see ScheduledMeal / the Target tab) was
+ * actually followed — the "tracker" half of the app. There's no meal reference here: the
+ * meal for a day always comes from whatever's currently scheduled, so a row's mere presence
+ * means "this day's plan was followed"; deleting it means "not (yet) confirmed."
  */
 @Entity(tableName = "log_entries")
 data class LogEntry(
     @PrimaryKey val day: Day,
-    val mealId: String,
 )

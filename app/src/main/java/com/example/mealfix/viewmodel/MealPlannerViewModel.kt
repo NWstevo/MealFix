@@ -64,12 +64,8 @@ class MealPlannerViewModel(private val repository: MealPlannerRepository) : View
 
     // ---------- Tracker ----------
 
-    fun logMeal(day: Day, mealId: String) {
-        viewModelScope.launch { repository.logMeal(day, mealId) }
-    }
-
-    fun unlogDay(day: Day) {
-        viewModelScope.launch { repository.unlogDay(day) }
+    fun setDayFollowed(day: Day, followed: Boolean) {
+        viewModelScope.launch { repository.setDayFollowed(day, followed) }
     }
 }
 
